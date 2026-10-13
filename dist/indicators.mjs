@@ -7,3 +7,5 @@ export function ema(values, period) {
 export function sma(values, period) {return values.length<period?null:values.slice(-period).reduce((a,b)=>a+b,0)/period}
 export function macd(values){return values.length<26?null:ema(values,12)-ema(values,26)}
 export function closes(klines,includeLive=false,now=Date.now()){return klines.filter(k=>includeLive||Number(k[6])<now).map(k=>Number(k[4]))}
+
+export function previousWeekHigh(klines,now=Date.now()){const closed=klines.filter(k=>Number(k[6])<now);return closed.length?Number(closed.at(-1)[2]):null}
