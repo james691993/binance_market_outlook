@@ -41,7 +41,7 @@ Nguồn: https://developers.binance.com/en/docs/products/spot/rest-api
 
 ## Gửi báo cáo lên Telegram
 
-Sau khi quét hoàn tất, nhập Bot Token và Channel ID (`@ten_channel` hoặc `-100…`) trên giao diện, xem trước nội dung rồi bấm **Gửi kết quả lên Telegram**. Bot phải là quản trị viên channel với quyền đăng bài. Token chỉ dùng trong lần gửi, không lưu vào trình duyệt hay repository; được xóa khỏi ô nhập sau khi gửi thành công.
+Sau khi quét hoàn tất, nhập Bot Token và Channel ID (`@ten_channel` hoặc `-100…`) trên giao diện, xem trước nội dung rồi bấm **Gửi kết quả lên Telegram**. Bot phải là quản trị viên channel với quyền đăng bài. Bấm **Lưu cấu hình** để lưu Bot Token và Channel ID trong localStorage của trình duyệt trên máy hiện tại; lần sau mở trang tự điền lại. Token vẫn được che khi nhập và được giữ sau khi gửi. **Xóa cấu hình** xóa dữ liệu đã lưu và ô nhập. Chỉ lưu trên máy tin cậy: người có quyền truy cập dữ liệu trình duyệt có thể đọc token. Token không được đưa vào repository hay lưu trên máy chủ ứng dụng.
 
 Frontend nguồn nằm trong `public/`. `worker/handler.mjs` chuyển tiếp yêu cầu gửi đến Telegram, không ghi log token và không tự thử lại để tránh gửi trùng. Backend này được bảo vệ bởi quyền truy cập Sites hiện tại. Không công khai backend mà chưa bổ sung kiểm soát truy cập tương ứng.
 

@@ -30,5 +30,24 @@ $('send-telegram').addEventListener('click',async()=>{
  const token=$('bot-token').value.trim(),channel=$('channel-id').value.trim();
  if(!token||!channel){$('telegram-status').textContent='Vui lòng nhập Bot Token và Channel ID.';return}
  const text=report;sending=true;$('send-telegram').disabled=true;$('refresh').disabled=true;$('telegram-status').textContent='Đang gửi báo cáo lên '+channel+'…';
- try{const response=await fetch('/api/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,channel,text})});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Không gửi được báo cáo.');$('telegram-status').textContent='Đã gửi báo cáo thành công lên '+channel+'.';$('bot-token').value=''}catch(e){$('telegram-status').textContent=e.message==='Failed to fetch'?'Chưa xác nhận được kết quả gửi. Kiểm tra channel trước khi thử lại.':e.message}finally{sending=false;$('send-telegram').disabled=!report||running;$('refresh').disabled=running}
+ try{const response=await fetch('/api/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,channel,text})});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Không gửi được báo cáo.');$('telegram-status').textContent='Đã gửi báo cáo thành công lên '+channel+'.'}catch(e){$('telegram-status').textContent=e.message==='Failed to fetch'?'Chưa xác nhận được kết quả gửi. Kiểm tra channel trước khi thử lại.':e.message}finally{sending=false;$('send-telegram').disabled=!report||running;$('refresh').disabled=running}
 });
+
+const telegramConfigKey='binance-breadth.telegram-config.v1';
+function restoreTelegramConfig(){
+ try{const raw=localStorage.getItem(telegramConfigKey);if(!raw)return;const saved=JSON.parse(raw);if(typeof saved.token!=='string'||typeof saved.channel!=='string')throw Error('invalid');$('bot-token').value=saved.token;$('channel-id').value=saved.channel;$('telegram-config-status').textContent='Đã tải cấu hình lưu trên trình duyệt này.'}
+ catch{$('telegram-config-status').textContent='Không đọc được cấu hình đã lưu. Bạn có thể nhập lại và lưu.'}
+}
+$('save-telegram').addEventListener('click',()=>{
+ const token=$('bot-token').value.trim(),channel=$('channel-id').value.trim();
+ if(!/^\d{5,20}:[A-Za-z0-9_-]{20,120}$/.test(token)||!/^(@[A-Za-z][A-Za-z0-9_]{4,31}|-100\d{5,20})$/.test(channel)){$('telegram-config-status').textContent='Nhập Bot Token và Channel ID hợp lệ trước khi lưu.';return}
+ try{localStorage.setItem(telegramConfigKey,JSON.stringify({token,channel}));$('telegram-config-status').textContent='Đã lưu. Lần sau mở trang sẽ tự điền Bot Token và Channel ID.'}
+ catch{$('telegram-config-status').textContent='Trình duyệt không cho phép lưu. Bạn vẫn có thể nhập và gửi trong phiên này.'}
+});
+$('clear-telegram').addEventListener('click',()=>{
+ $('bot-token').value='';$('channel-id').value='';
+ try{localStorage.removeItem(telegramConfigKey);$('telegram-config-status').textContent='Đã xóa Bot Token và Channel ID đã lưu.'}
+ catch{$('telegram-config-status').textContent='Đã xóa ô nhập nhưng không xóa được dữ liệu lưu. Hãy xóa dữ liệu trang trong cài đặt trình duyệt.'}
+});
+for(const id of ['bot-token','channel-id'])$(id).addEventListener('input',()=>{$('telegram-config-status').textContent='Cấu hình đã thay đổi. Bấm Lưu cấu hình để nhớ thông tin mới.'});
+restoreTelegramConfig();
