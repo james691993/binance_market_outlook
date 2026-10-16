@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {telegram} from '../worker/handler.mjs';
+const url='https://example.test/api/telegram',token='123456789:abcdefghijklmnopqrstuvwxyz_12345',channel='@testchannel';
+const req=(body,origin='https://example.test')=>new Request(url,{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(body)});
+const payload={token,channel,text:'BINANCE MARKET BREADTH\nBáo cáo kiểm tra'};
+assert.equal((await telegram(req(payload,'https://other.test'))).status,403);
+assert.equal((await telegram(req({...payload,token:'bad'}))).status,400);
+assert.equal((await telegram(req({...payload,channel:'invalid'}))).status,400);
+let calls=0;const response=await telegram(req(payload),async(endpoint,options)=>{calls++;assert.equal(endpoint,`https://api.telegram.org/bot${token}/sendMessage`);assert.deepEqual(JSON.parse(options.body),{chat_id:channel,text:payload.text});return Response.json({ok:true})});assert.equal(calls,1);assert.deepEqual(await response.json(),{ok:true});
+const denied=await telegram(req(payload),async()=>Response.json({ok:false,error_code:401,description:token},{status:401}));assert(!(await denied.text()).includes(token));
+const timedOut=await telegram(req(payload),async()=>{throw Error(token)});assert(!(await timedOut.text()).includes(token));
+console.log('Telegram validation, forwarding and secret redaction checks passed (mock requests only)');

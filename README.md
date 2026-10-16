@@ -38,3 +38,13 @@ Dữ liệu giá và nến được lấy trong một lượt quét, tại các 
 - `.openai/hosting.json`: cấu hình triển khai Sites hiện tại.
 
 Nguồn: https://developers.binance.com/en/docs/products/spot/rest-api
+
+## Gửi báo cáo lên Telegram
+
+Sau khi quét hoàn tất, nhập Bot Token và Channel ID (`@ten_channel` hoặc `-100…`) trên giao diện, xem trước nội dung rồi bấm **Gửi kết quả lên Telegram**. Bot phải là quản trị viên channel với quyền đăng bài. Token chỉ dùng trong lần gửi, không lưu vào trình duyệt hay repository; được xóa khỏi ô nhập sau khi gửi thành công.
+
+Frontend nguồn nằm trong `public/`. `worker/handler.mjs` chuyển tiếp yêu cầu gửi đến Telegram, không ghi log token và không tự thử lại để tránh gửi trùng. Backend này được bảo vệ bởi quyền truy cập Sites hiện tại. Không công khai backend mà chưa bổ sung kiểm soát truy cập tương ứng.
+
+Build bản triển khai: `node scripts/build.mjs`. Kiểm tra backend với yêu cầu giả lập (không gửi tin thật): `node scripts/test-telegram.mjs`.
+
+Chạy `python3 -m http.server 8000 --directory public` để xem giao diện cục bộ; chức năng gửi Telegram cần backend Worker được triển khai trên Sites.
