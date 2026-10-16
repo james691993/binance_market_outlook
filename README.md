@@ -48,3 +48,5 @@ Frontend nguồn nằm trong `public/`. `worker/handler.mjs` chuyển tiếp yê
 Build bản triển khai: `node scripts/build.mjs`. Kiểm tra backend với yêu cầu giả lập (không gửi tin thật): `node scripts/test-telegram.mjs`.
 
 Chạy `python3 -m http.server 8000 --directory public` để xem giao diện cục bộ; chức năng gửi Telegram cần backend Worker được triển khai trên Sites.
+
+Nút **Gửi tin thử** hoạt động trước khi quét, gửi một tin ngắn vào channel để xác minh token, đích nhận và quyền đăng bài. Báo cáo Telegram chỉ gồm tổng quan tỷ lệ % của 6 chỉ số, không gửi danh sách hay giá trị chi tiết từng coin.
