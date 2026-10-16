@@ -25,15 +25,27 @@ async function scan(){if(running)return;running=true;limited=false;report=null;$
  }catch(e){$('status').textContent='Không tải được dữ liệu: '+e.message+'. Kiểm tra kết nối và thử lại.';$('updated').textContent='Cập nhật thất bại'}finally{running=false;$('test-telegram').disabled=sending;$('refresh').disabled=false;$('scope').disabled=$('mode').disabled=$('stable').disabled=false;render()}}
 $('refresh').addEventListener('click',scan);$('search').addEventListener('input',render);$('filters').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;filter=b.dataset.filter;document.querySelectorAll('.filters button').forEach(x=>x.classList.toggle('selected',x===b));render()});render();
 
+function telegramNotice(message,state='info'){
+ const target=$('telegram-status');target.textContent=message;target.dataset.state=state;target.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+}
 async function sendTelegram(text,isTest=false){
- if(sending||running||!text)return;
- const token=$('bot-token').value.trim(),channel=$('channel-id').value.trim();
- if(!token||!channel){$('telegram-status').textContent='Vui lòng nhập Bot Token và Channel ID trước khi gửi.';return}
+ if(sending){telegramNotice('Đang gửi tin. Vui lòng đợi kết quả.','pending');return}
+ if(running){telegramNotice('Đang quét dữ liệu. Vui lòng đợi quét hoàn tất.');return}
+ if(!text)return;
+ const token=$('bot-token').value.trim().replace(/^bot(?=\d)/i,''),channel=$('channel-id').value.trim();
+ if(!token||!channel){telegramNotice('Chưa gửi: vui lòng nhập cả Bot Token và Channel ID.','error');return}
+ if(!/^\d{5,20}:[A-Za-z0-9_-]{20,120}$/.test(token)){telegramNotice('Chưa gửi: Bot Token sai định dạng. Sao chép toàn bộ token từ @BotFather.','error');return}
+ if(!/^(@[A-Za-z][A-Za-z0-9_]{4,31}|-100\d{5,20})$/.test(channel)){telegramNotice('Chưa gửi: nhập @username channel công khai hoặc ID channel riêng tư dạng -100… Không nhập link t.me.','error');return}
  sending=true;$('send-telegram').disabled=true;$('test-telegram').disabled=true;$('refresh').disabled=true;
- $('telegram-status').textContent=(isTest?'Đang gửi tin thử đến ':'Đang gửi tổng quan đến ')+channel+'…';
- try{const response=await fetch('/api/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,channel,text})});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Không gửi được tin nhắn.');$('telegram-status').textContent=isTest?'Gửi thử thành công đến '+channel+'. Token, Channel ID và quyền đăng bài đã hoạt động. Bạn có thể bắt đầu quét.':'Đã gửi tổng quan thành công đến '+channel+'.'}
- catch(e){$('telegram-status').textContent=e.message==='Failed to fetch'?'Chưa xác nhận được kết quả gửi. Kiểm tra channel trước khi thử lại.':e.message}
- finally{sending=false;$('send-telegram').disabled=!report||running;$('test-telegram').disabled=running;$('refresh').disabled=running}
+ const originalLabel=$('test-telegram').textContent;if(isTest)$('test-telegram').textContent='Đang gửi tin thử…';
+ telegramNotice((isTest?'Đang gửi tin thử đến ':'Đang gửi tổng quan đến ')+channel+'… (tối đa 25 giây)','pending');
+ try{const response=await fetch('/api/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,channel,text}),signal:AbortSignal.timeout(25000)});
+ const contentType=response.headers.get('content-type')||'';if(!contentType.includes('application/json'))throw Error('Máy chủ chưa trả kết quả gửi. Hãy tải lại trang, đăng nhập nếu được yêu cầu rồi thử lại.');
+ const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Không gửi được tin nhắn.');
+ const destination=result.chatTitle||channel;const receipt=result.messageId?' · Mã tin '+result.messageId:'';
+ telegramNotice((isTest?'Telegram đã nhận tin thử tại ':'Đã gửi tổng quan đến ')+destination+receipt+(isTest?'. Mở đúng channel này để xem tin; sau đó bạn có thể bắt đầu quét.':'.'),'success');
+ }catch(e){const timedOut=['TimeoutError','AbortError'].includes(e.name);telegramNotice(timedOut?'Hết thời gian chờ. Chưa xác nhận được đã gửi hay chưa; kiểm tra channel trước khi bấm lại.':e.message==='Failed to fetch'?'Không kết nối được máy chủ. Kiểm tra mạng; nếu đã gửi, kiểm tra channel trước khi thử lại.':e.message,'error')}
+ finally{sending=false;$('test-telegram').textContent=originalLabel;$('send-telegram').disabled=!report||running;$('test-telegram').disabled=running;$('refresh').disabled=running}
 }
 $('send-telegram').addEventListener('click',()=>sendTelegram(report));
 $('test-telegram').addEventListener('click',()=>sendTelegram('BINANCE MARKET BREADTH\n✅ Kết nối Telegram thành công. Bot có thể gửi tin nhắn vào channel này.\n'+new Date().toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})+' (giờ Việt Nam)',true));
